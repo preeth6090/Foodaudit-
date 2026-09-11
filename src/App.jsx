@@ -8,20 +8,24 @@ import SignaturePad from './components/SignaturePad.jsx'
 import Toast from './components/Toast.jsx'
 import SettingsPanel from './components/SettingsPanel.jsx'
 import SavedDocumentsPanel from './components/SavedDocumentsPanel.jsx'
+import AuthPanel from './components/AuthPanel.jsx'
 import { useAuditState } from './hooks/useAuditState.js'
 import { useSettings } from './hooks/useSettings.js'
 import { useSavedDocuments } from './hooks/useSavedDocuments.js'
+import { useAuth } from './hooks/useAuth.js'
 import { buildReportHtml, openReportWindow } from './utils/report.js'
 
 export default function App() {
   const { settings, updateSettings, nextDocNo, consumeDocNo } = useSettings()
   const { state, dispatch, scores } = useAuditState(settings.passingBenchmark)
-  const { documents, saveDocument, deleteDocument } = useSavedDocuments()
+  const auth = useAuth()
+  const { documents, saveDocument, deleteDocument } = useSavedDocuments(auth.user)
 
   const [toast, setToast] = useState(null)
   const [editMode, setEditMode] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [savedDocsOpen, setSavedDocsOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
   const toastTimerRef = useRef(null)
 
   const showToast = useCallback((message, icon) => {
@@ -48,19 +52,23 @@ export default function App() {
     setTimeout(() => window.print(), 350)
   }
 
-  function handleSaveDocument() {
+  async function handleSaveDocument() {
     const docNo = consumeDocNo()
     dispatch({ type: 'SET_DOC_NO', docNo })
-    saveDocument({
-      docNo,
-      savedAt: new Date().toISOString(),
-      meta: state.meta,
-      checklist: state.checklist,
-      items: state.items,
-      signatures: state.signatures,
-      scores,
-    })
-    showToast(`Saved as ${docNo}`, '💾')
+    try {
+      await saveDocument({
+        docNo,
+        savedAt: new Date().toISOString(),
+        meta: state.meta,
+        checklist: state.checklist,
+        items: state.items,
+        signatures: state.signatures,
+        scores,
+      })
+      showToast(`Saved as ${docNo}`, '💾')
+    } catch (err) {
+      showToast(`Could not save document: ${err.message}`, '⚠️')
+    }
   }
 
   function handleLoadDocument(doc) {
@@ -76,9 +84,13 @@ export default function App() {
     showToast(`Loaded ${doc.docNo}`, '📂')
   }
 
-  function handleDeleteDocument(docNo) {
-    deleteDocument(docNo)
-    showToast('Document deleted', '🗑️')
+  async function handleDeleteDocument(docNo) {
+    try {
+      await deleteDocument(docNo)
+      showToast('Document deleted', '🗑️')
+    } catch (err) {
+      showToast(`Could not delete document: ${err.message}`, '⚠️')
+    }
   }
 
   function handleGenerateReport(doc) {
@@ -116,6 +128,7 @@ export default function App() {
         passingBenchmark={settings.passingBenchmark}
         scores={scores}
         savedCount={documents.length}
+        authUser={auth.user}
         onPassAll={handlePassAll}
         onSave={handleSaveDocument}
         onGenerateReport={() => handleGenerateReport(null)}
@@ -123,6 +136,7 @@ export default function App() {
         onReset={handleReset}
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenSavedDocs={() => setSavedDocsOpen(true)}
+        onOpenAuth={() => setAuthOpen(true)}
       />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 print-container">
@@ -238,6 +252,8 @@ export default function App() {
         onDelete={handleDeleteDocument}
         onReport={handleGenerateReport}
       />
+
+      <AuthPanel open={authOpen} onClose={() => setAuthOpen(false)} auth={auth} />
     </>
   )
 }

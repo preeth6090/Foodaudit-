@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Paste this into Firebase console -> Firestore Database -> Rules.
+// Each signed-in auditor can only read/write their own saved documents.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/documents/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
