@@ -49,17 +49,25 @@
     border: 1px solid #444 !important;
     padding: 3px 5px !important;
   }
+  .checklist-table thead {
+    display: table-header-group;
+  }
   .section-row {
     background-color: #e2e8f0 !important;
     font-weight: 700 !important;
     -webkit-print-color-adjust: exact !important;
+    break-after: avoid;
+    break-inside: avoid;
   }
   .signature-img {
     max-height: 42px !important;
   }
-  /* Always show every checklist row when printing, regardless of active filter/search */
+  /* Always show every checklist row when printing, regardless of active filter/search,
+     and keep each row (including any attached photo) from splitting across a page. */
   .item-row {
     display: table-row !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 

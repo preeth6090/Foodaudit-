@@ -43,31 +43,38 @@ export function buildReportHtml({ docNo, orgTitle, meta, checklist, items, score
 <meta charset="UTF-8">
 <title>Corrective Action Report - ${escapeHtml(docNo)}</title>
 <style>
-  @page { size: A4 portrait; margin: 12mm 14mm; }
-  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box; }
-  body { margin: 0; color: #0f172a; font-size: 11px; }
-  h1 { font-size: 18px; margin: 0 0 2px; }
-  h2 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #0f172a; padding-bottom: 4px; }
-  .subtitle { color: #475569; font-size: 11px; margin: 0 0 14px; }
-  .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 16px; font-size: 11px; margin-bottom: 12px; }
+  @page { size: A4 portrait; margin: 10mm 12mm; }
+  * {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body { margin: 0; color: #0f172a; font-size: 10.5px; line-height: 1.35; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 12.5px; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #0f172a; padding-bottom: 3px; break-after: avoid; break-inside: avoid; }
+  .subtitle { color: #475569; font-size: 10.5px; margin: 0 0 10px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 16px; font-size: 10.5px; margin-bottom: 10px; break-inside: avoid; }
   .meta-grid div span.label { color: #64748b; font-weight: 600; margin-right: 4px; }
-  .summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 16px; }
-  .stat { border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; text-align: center; min-width: 78px; }
-  .stat .n { font-size: 16px; font-weight: 800; display: block; }
-  .stat .l { font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; }
-  .verdict { display: inline-block; padding: 4px 14px; border-radius: 999px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+  .summary { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; break-inside: avoid; }
+  .stat { border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 10px; text-align: center; min-width: 72px; }
+  .stat .n { font-size: 15px; font-weight: 800; display: block; }
+  .stat .l { font-size: 8.5px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+  .verdict { display: inline-block; padding: 3px 13px; border-radius: 999px; font-weight: 800; font-size: 11px; text-transform: uppercase; }
   .verdict.pass { background: #059669; color: #fff; }
   .verdict.fail { background: #e11d48; color: #fff; }
   .verdict.pending { background: #fbbf24; color: #78350f; }
   table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  th, td { border: 1px solid #cbd5e1; padding: 6px 7px; text-align: left; vertical-align: top; font-size: 10.5px; }
-  th { background: #0f172a; color: #fff; text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.03em; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  th, td { border: 1px solid #cbd5e1; padding: 5px 6px; text-align: left; vertical-align: top; font-size: 10px; }
+  th { background: #0f172a; color: #fff; text-transform: uppercase; font-size: 9px; letter-spacing: 0.03em; }
   td.center { text-align: center; }
   .finding-note { color: #475569; font-style: italic; }
-  .muted { color: #94a3b8; font-size: 9.5px; }
-  .evidence { max-width: 90px; max-height: 90px; border-radius: 4px; border: 1px solid #cbd5e1; }
-  .all-clear { border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; padding: 12px 16px; border-radius: 8px; font-weight: 600; }
-  .footnote { margin-top: 22px; font-size: 9.5px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+  .muted { color: #94a3b8; font-size: 9px; }
+  .evidence { max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #cbd5e1; display: block; margin: 0 auto; }
+  .all-clear { border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; padding: 10px 14px; border-radius: 8px; font-weight: 600; }
+  .footnote { margin-top: 16px; font-size: 9px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px; break-inside: avoid; }
   .footnote strong { color: #334155; }
 </style>
 </head>
