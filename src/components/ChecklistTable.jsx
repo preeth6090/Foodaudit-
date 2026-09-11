@@ -1,16 +1,16 @@
 import { Fragment, useRef, useState } from 'react'
 import { readAndCompressImage } from '../utils/image.js'
 
+const STATUS_STYLE = {
+  P: { active: 'bg-emerald-600 text-white border-emerald-600 shadow-sm', hover: 'hover:bg-emerald-50 hover:text-emerald-700' },
+  F: { active: 'bg-rose-600 text-white border-rose-600 shadow-sm', hover: 'hover:bg-rose-50 hover:text-rose-700' },
+  NR: { active: 'bg-slate-500 text-white border-slate-500 shadow-sm', hover: 'hover:bg-slate-100 hover:text-slate-700' },
+}
+
 function statusBtnClass(active, variant) {
-  const base = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition'
-  if (active) {
-    return variant === 'P'
-      ? `${base} bg-emerald-600 text-white border-emerald-600 shadow-sm`
-      : `${base} bg-rose-600 text-white border-rose-600 shadow-sm`
-  }
-  return variant === 'P'
-    ? `${base} bg-white text-slate-700 border-slate-300 hover:bg-emerald-50 hover:text-emerald-700`
-    : `${base} bg-white text-slate-700 border-slate-300 hover:bg-rose-50 hover:text-rose-700`
+  const base = 'status-btn px-2 py-1 rounded text-[11px] font-bold border transition'
+  const style = STATUS_STYLE[variant]
+  return active ? `${base} ${style.active}` : `${base} bg-white text-slate-700 border-slate-300 ${style.hover}`
 }
 
 function ProofCell({ itemId, proof, onSetProof, onClearProof }) {
@@ -75,7 +75,9 @@ function ProofCell({ itemId, proof, onSetProof, onClearProof }) {
 function ItemRow({ item, sectionId, state, visible, editMode, onToggleStatus, onObsChange, onSetProof, onClearProof, onRemoveItem }) {
   return (
     <tr
-      className={`item-row hover:bg-slate-50 transition border-b border-slate-200 ${state.status === 'F' ? 'bg-rose-50/60' : ''}`}
+      className={`item-row hover:bg-slate-50 transition border-b border-slate-200 ${
+        state.status === 'F' ? 'bg-rose-50/60' : state.status === 'NR' ? 'bg-slate-100/70' : ''
+      }`}
       style={{ display: visible ? undefined : 'none' }}
     >
       <td className="py-2.5 px-3 text-center font-bold text-slate-600 border-r border-slate-200">{item.id}</td>
@@ -107,7 +109,7 @@ function ItemRow({ item, sectionId, state, visible, editMode, onToggleStatus, on
         <ProofCell itemId={item.id} proof={state.proof} onSetProof={onSetProof} onClearProof={onClearProof} />
       </td>
       <td className="py-1 px-2 text-center align-middle">
-        <div className="flex items-center justify-center gap-1.5 no-print">
+        <div className="flex items-center justify-center gap-1 no-print">
           <button
             type="button"
             onClick={() => onToggleStatus(item.id, 'P')}
@@ -124,41 +126,35 @@ function ItemRow({ item, sectionId, state, visible, editMode, onToggleStatus, on
           >
             F
           </button>
+          <button
+            type="button"
+            onClick={() => onToggleStatus(item.id, 'NR')}
+            title="Not Relevant — excluded from the score"
+            className={statusBtnClass(state.status === 'NR', 'NR')}
+          >
+            NR
+          </button>
         </div>
 
         <div className="print-only text-center font-bold text-[10px]">
-          <span style={{ display: 'inline-block', marginRight: 6 }}>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                border: '1px solid #333',
-                verticalAlign: 'middle',
-                lineHeight: '9px',
-                textAlign: 'center',
-              }}
-            >
-              {state.status === 'P' ? '✓' : ''}
-            </span>{' '}
-            P
-          </span>
-          <span style={{ display: 'inline-block' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                border: '1px solid #333',
-                verticalAlign: 'middle',
-                lineHeight: '9px',
-                textAlign: 'center',
-              }}
-            >
-              {state.status === 'F' ? '✗' : ''}
-            </span>{' '}
-            F
-          </span>
+          {['P', 'F', 'NR'].map((code) => (
+            <span key={code} style={{ display: 'inline-block', marginRight: code !== 'NR' ? 5 : 0 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 10,
+                  height: 10,
+                  border: '1px solid #333',
+                  verticalAlign: 'middle',
+                  lineHeight: '9px',
+                  textAlign: 'center',
+                }}
+              >
+                {state.status === code ? '✓' : ''}
+              </span>{' '}
+              {code}
+            </span>
+          ))}
         </div>
       </td>
     </tr>
@@ -207,6 +203,7 @@ function isRowVisible(item, state, filter, search) {
   let matchesStatus = true
   if (filter === 'pass') matchesStatus = state.status === 'P'
   else if (filter === 'fail') matchesStatus = state.status === 'F'
+  else if (filter === 'nr') matchesStatus = state.status === 'NR'
   else if (filter === 'pending') matchesStatus = state.status === null
 
   const matchesSearch = item.text.toLowerCase().includes(search) || state.obs.toLowerCase().includes(search)
@@ -233,14 +230,14 @@ export default function ChecklistTable({
         <thead>
           <tr className="bg-slate-800 text-white print:bg-slate-200 print:text-black font-bold uppercase tracking-wider">
             <th className="py-2.5 px-3 w-[5%] text-center border-r border-slate-700 print:border-slate-400">Sl.</th>
-            <th className="py-2.5 px-4 w-[41%] border-r border-slate-700 print:border-slate-400">
+            <th className="py-2.5 px-4 w-[38%] border-r border-slate-700 print:border-slate-400">
               Audit Parameter / Standard Requirement
             </th>
-            <th className="py-2.5 px-3 w-[21%] border-r border-slate-700 print:border-slate-400">
+            <th className="py-2.5 px-3 w-[20%] border-r border-slate-700 print:border-slate-400">
               Observations / Findings
             </th>
-            <th className="py-2.5 px-2 w-[13%] text-center border-r border-slate-700 print:border-slate-400">Proof</th>
-            <th className="py-2.5 px-2 w-[20%] text-center">Status</th>
+            <th className="py-2.5 px-2 w-[12%] text-center border-r border-slate-700 print:border-slate-400">Proof</th>
+            <th className="py-2.5 px-2 w-[25%] text-center">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">

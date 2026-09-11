@@ -94,6 +94,11 @@ export default function Header({
           </div>
           <div className="h-7 w-[1px] bg-slate-700" />
           <div className="text-center px-2">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">N/R</span>
+            <span className="text-sm font-extrabold text-slate-300">{scores.notRelevant}</span>
+          </div>
+          <div className="h-7 w-[1px] bg-slate-700" />
+          <div className="text-center px-2">
             <span className="text-[10px] uppercase font-bold text-amber-400 block">Unchecked</span>
             <span className="text-sm font-extrabold text-amber-300">{scores.pending}</span>
           </div>

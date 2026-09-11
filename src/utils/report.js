@@ -87,6 +87,7 @@ export function buildReportHtml({ docNo, orgTitle, meta, checklist, items, score
   <div class="summary">
     <div class="stat"><span class="n">${scores.passed}</span><span class="l">Passed</span></div>
     <div class="stat"><span class="n">${scores.failed}</span><span class="l">Failed</span></div>
+    <div class="stat"><span class="n">${scores.notRelevant ?? 0}</span><span class="l">Not Relevant</span></div>
     <div class="stat"><span class="n">${scores.pending}</span><span class="l">Pending</span></div>
     <div class="stat"><span class="n">${scores.pct}%</span><span class="l">Score</span></div>
     <div class="stat" style="display:flex; align-items:center; justify-content:center;"><span class="verdict ${verdictClass}">${verdictLabel}</span></div>

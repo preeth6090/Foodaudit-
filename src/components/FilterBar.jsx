@@ -3,6 +3,7 @@ const FILTERS = [
   { key: 'pending', label: 'Pending', activeClass: 'bg-slate-900 text-white' },
   { key: 'pass', label: 'Passed', activeClass: 'bg-slate-900 text-white' },
   { key: 'fail', label: 'Failed', activeClass: 'bg-slate-900 text-white' },
+  { key: 'nr', label: 'N/R', activeClass: 'bg-slate-900 text-white' },
 ]
 
 const INACTIVE_CLASS = {
@@ -10,6 +11,7 @@ const INACTIVE_CLASS = {
   pending: 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300',
   pass: 'bg-white text-emerald-700 hover:bg-emerald-50 border border-slate-300',
   fail: 'bg-white text-rose-700 hover:bg-rose-50 border border-slate-300',
+  nr: 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-300',
 }
 
 export default function FilterBar({ filter, search, total, editMode, onFilterChange, onSearchChange, onToggleEditMode }) {

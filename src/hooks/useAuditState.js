@@ -165,16 +165,21 @@ export function useAuditState(passingBenchmark) {
   const scores = useMemo(() => {
     let passed = 0
     let failed = 0
+    let notRelevant = 0
     Object.values(state.items).forEach(({ status }) => {
       if (status === 'P') passed++
       else if (status === 'F') failed++
+      else if (status === 'NR') notRelevant++
     })
-    const pending = totalItems - passed - failed
+    // Items marked Not Relevant are excluded entirely from the score — they
+    // don't count as pending and don't factor into the percentage.
+    const applicableTotal = totalItems - notRelevant
+    const pending = applicableTotal - passed - failed
     const totalEvaluated = passed + failed
-    const pct = totalEvaluated > 0 ? Number(((passed / totalItems) * 100).toFixed(1)) : 0
-    const evaluatedPct = totalItems > 0 ? Number(((totalEvaluated / totalItems) * 100).toFixed(0)) : 0
-    const verdict = pending > 0 ? 'pending' : pct >= passingBenchmark ? 'pass' : 'fail'
-    return { passed, failed, pending, pct, evaluatedPct, verdict, total: totalItems }
+    const pct = totalEvaluated > 0 ? Number(((passed / applicableTotal) * 100).toFixed(1)) : 0
+    const evaluatedPct = applicableTotal > 0 ? Number(((totalEvaluated / applicableTotal) * 100).toFixed(0)) : 0
+    const verdict = applicableTotal === 0 || pending > 0 ? 'pending' : pct >= passingBenchmark ? 'pass' : 'fail'
+    return { passed, failed, notRelevant, pending, pct, evaluatedPct, verdict, total: totalItems, applicableTotal }
   }, [state.items, totalItems, passingBenchmark])
 
   return { state, dispatch, scores }
