@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Kitchen Audit Checklist</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Print-specific layout ensuring precision A4 matching */
+    @page {
+      size: A4 portrait;
+      margin: 7mm 8mm;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        font-size: 8.5pt !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+      }
+      .page-break-after {
+        page-break-after: always;
+        break-after: page;
+      }
+      .checklist-table th, .checklist-table td {
+        border: 1px solid #444 !important;
+        padding: 3px 5px !important;
+      }
+      .section-row {
+        background-color: #e2e8f0 !important;
+        font-weight: 700 !important;
+        -webkit-print-color-adjust: exact !important;
+      }
+      .signature-img {
+        max-height: 42px !important;
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    /* Custom smooth scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <!-- Top Navigation / Score Dashboard (Screen Only) -->
+  <header class="no-print sticky top-0 z-40 bg-slate-900 text-white shadow-lg backdrop-blur-md bg-opacity-95 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center font-bold text-white shadow">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-wide">Kitchen Audit Inspector</h1>
+          <p class="text-xs text-slate-400">Doc No: ASPL/IM5P34/F-08 &bull; Passing Benchmark: 80%</p>
+        </div>
+      </div>
+
+      <!-- Live Calculation Pill Badges -->
+      <div class="flex items-center gap-2 sm:gap-4 flex-wrap bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700">
+        <div class="text-center px-2">
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Total Items</span>
+          <span id="stat-total" class="text-sm font-extrabold text-white">60</span>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div class="text-center px-2">
+          <span class="text-[10px] uppercase font-bold text-emerald-400 block">Passed</span>
+          <span id="stat-passed" class="text-sm font-extrabold text-emerald-400">0</span>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div class="text-center px-2">
+          <span class="text-[10px] uppercase font-bold text-rose-400 block">Failed</span>
+          <span id="stat-failed" class="text-sm font-extrabold text-rose-400">0</span>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div class="text-center px-2">
+          <span class="text-[10px] uppercase font-bold text-amber-400 block">Unchecked</span>
+          <span id="stat-pending" class="text-sm font-extrabold text-amber-300">60</span>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div class="text-center px-2">
+          <span class="text-[10px] uppercase font-bold text-slate-300 block">Score</span>
+          <span id="stat-score" class="text-base font-black text-white">0.0%</span>
+        </div>
+        <div id="stat-verdict-badge" class="ml-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-700 text-slate-300">
+          Incomplete
+        </div>
+      </div>
+
+      <!-- Top Actions -->
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="quickFillPass()" title="Mark all unchecked items as Pass" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <span class="hidden sm:inline">Pass All</span>
+        </button>
+        <button type="button" onclick="fillDemoData()" title="Populate standard inspection data" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span class="hidden md:inline">Demo Fill</span>
+        </button>
+        <button type="button" onclick="triggerPrint()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition-all shadow flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          <span>Print / PDF</span>
+        </button>
+        <button type="button" onclick="resetChecklist()" class="bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-semibold px-2.5 py-2 rounded-lg transition-all" title="Clear all selections">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live progress track -->
+    <div class="w-full bg-slate-800 h-1.5">
+      <div id="progress-bar" class="bg-gradient-to-r from-sky-500 to-emerald-500 h-1.5 transition-all duration-300 w-0"></div>
+    </div>
+  </header>
+
+  <!-- Audit Container -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 print-container">
+
+    <!-- Card Wrapper -->
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden p-6 sm:p-8 print:p-0 print:border-none print:shadow-none">
+
+      <!-- Formal Document Header -->
+      <div class="border-b-2 border-slate-900 pb-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">Kitchen Quality & Safety Inspection</h2>
+            <p class="text-xs text-slate-500 font-medium">Standard Food Hygiene & Facility Compliance Audit</p>
+          </div>
+          <div class="text-left sm:text-right text-xs text-slate-600 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 print:border-none print:p-0">
+            <div>Doc No: <strong class="text-slate-900">ASPL/IM5P34/F-08</strong> | Ver: <strong class="text-slate-900">00</strong></div>
+            <div>Rev Date: <strong class="text-slate-900">30-APR-2026</strong></div>
+          </div>
+        </div>
+        <div class="mt-4 py-2 px-4 bg-slate-900 text-white text-center rounded-lg print:bg-slate-100 print:text-black print:border-y-2 print:border-black print:rounded-none">
+          <h3 class="text-lg font-black tracking-widest uppercase">Kitchen Audit Checklist</h3>
+        </div>
+      </div>
+
+      <!-- Audit Metadata Inputs -->
+      <section class="mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 print:grid-cols-3 print:gap-1 text-xs">
+          <!-- Outlet Name -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Outlet Name:</span>
+            <input type="text" id="meta-outlet" placeholder="e.g., Downtown Bistro K-04" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+          <!-- Audit Date -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Audit Date:</span>
+            <input type="date" id="meta-date" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+          <!-- Audit Time -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Audit Time:</span>
+            <input type="time" id="meta-time" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+          <!-- Location -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Location:</span>
+            <input type="text" id="meta-location" placeholder="e.g., Food Court, Tower 2" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+          <!-- Auditor Name -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Auditor Name:</span>
+            <input type="text" id="meta-auditor" placeholder="Auditor full name" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+          <!-- Outlet Rep -->
+          <div class="flex flex-col sm:flex-row items-stretch border border-slate-300 rounded-lg overflow-hidden print:rounded-none">
+            <span class="bg-slate-100 px-3 py-2 font-bold text-slate-700 w-full sm:w-32 flex items-center print:w-28 print:bg-slate-200">Outlet Rep:</span>
+            <input type="text" id="meta-rep" placeholder="Store Manager / Chef" class="w-full px-3 py-2 outline-none font-medium text-slate-900 bg-white">
+          </div>
+        </div>
+      </section>
+
+      <!-- Checklist Filter & Quick Search (Screen only) -->
+      <div class="no-print mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-bold text-slate-600">Quick Filter:</span>
+          <button type="button" onclick="filterItems('all')" id="filter-all" class="filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-slate-900 text-white transition">All (60)</button>
+          <button type="button" onclick="filterItems('pending')" id="filter-pending" class="filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-white text-slate-700 hover:bg-slate-200 border border-slate-300 transition">Pending</button>
+          <button type="button" onclick="filterItems('pass')" id="filter-pass" class="filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-white text-emerald-700 hover:bg-emerald-50 border border-slate-300 transition">Passed</button>
+          <button type="button" onclick="filterItems('fail')" id="filter-fail" class="filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-white text-rose-700 hover:bg-rose-50 border border-slate-300 transition">Failed</button>
+        </div>
+        <div class="relative w-full sm:w-64">
+          <input type="text" id="search-input" onkeyup="searchAuditItems()" placeholder="Search parameters..." class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Interactive Checklist Table -->
+      <div class="overflow-x-auto rounded-lg border border-slate-300 print:border-none">
+        <table class="checklist-table w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-800 text-white print:bg-slate-200 print:text-black font-bold uppercase tracking-wider">
+              <th class="py-2.5 px-3 w-[6%] text-center border-r border-slate-700 print:border-slate-400">Sl.</th>
+              <th class="py-2.5 px-4 w-[54%] border-r border-slate-700 print:border-slate-400">Audit Parameter / Standard Requirement</th>
+              <th class="py-2.5 px-3 w-[26%] border-r border-slate-700 print:border-slate-400">Observations / Findings</th>
+              <th class="py-2.5 px-2 w-[14%] text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="checklist-tbody" class="divide-y divide-slate-200">
+            <!-- Dynamically injected via JavaScript with all 60 standard items -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Scoring Summary Panel -->
+      <section class="mt-6 border-2 border-slate-300 rounded-xl overflow-hidden print:rounded-none print:border-slate-700 print:mt-4">
+        <div class="bg-slate-100 px-4 py-2 font-bold text-xs uppercase tracking-wider border-b border-slate-300 flex justify-between items-center print:bg-slate-200">
+          <span>Official Audit Scoring Summary</span>
+          <span class="text-[11px] font-normal text-slate-500 lowercase print:hidden">Auto-calculated based on evaluation</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-6 divide-x divide-y sm:divide-y-0 divide-slate-200 text-xs">
+          <div class="p-3 text-center bg-white">
+            <span class="text-slate-500 font-semibold block text-[11px]">Total Passed</span>
+            <span id="summary-passed" class="text-base font-black text-emerald-600">0</span>
+          </div>
+          <div class="p-3 text-center bg-white">
+            <span class="text-slate-500 font-semibold block text-[11px]">Total Failed</span>
+            <span id="summary-failed" class="text-base font-black text-rose-600">0</span>
+          </div>
+          <div class="p-3 text-center bg-white">
+            <span class="text-slate-500 font-semibold block text-[11px]">Pending Items</span>
+            <span id="summary-pending" class="text-base font-bold text-amber-500">60</span>
+          </div>
+          <div class="p-3 text-center bg-white">
+            <span class="text-slate-500 font-semibold block text-[11px]">Percentage Score</span>
+            <span id="summary-pct" class="text-base font-black text-sky-700">0.0%</span>
+          </div>
+          <div class="p-3 text-center bg-white col-span-2 flex flex-col justify-center items-center">
+            <span class="text-slate-500 font-semibold block text-[11px]">Audit Verdict</span>
+            <div id="summary-verdict-tag" class="mt-1 font-black text-sm uppercase px-4 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              [ ] PENDING EVALUATION
+            </div>
+          </div>
+        </div>
+        <div class="p-2.5 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-600 italic">
+          * Note: If the final score is below <strong>80%</strong>, immediate corrective action review with the Store Area / Business Manager is mandatory within 24 hours.
+        </div>
+      </section>
+
+      <!-- Signatures & Verification Block -->
+      <section class="mt-8 pt-6 border-t border-slate-300">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center text-xs">
+          
+          <!-- Auditor Signature Box -->
+          <div class="flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:p-0 print:border-none">
+            <div class="w-full flex justify-between items-center mb-1 no-print">
+              <span class="font-bold text-slate-700 text-xs">Auditor Signature</span>
+              <button type="button" onclick="clearSignature('auditor')" class="text-[10px] text-rose-600 hover:underline">Clear</button>
+            </div>
+            <!-- Canvas for Interactive Drawing -->
+            <div class="w-full border-2 border-dashed border-slate-300 rounded-lg bg-white overflow-hidden relative touch-none no-print">
+              <canvas id="canvas-auditor" width="280" height="90" class="w-full h-[90px] cursor-crosshair"></canvas>
+            </div>
+            <!-- Print Placeholder or Embedded Image -->
+            <div class="w-full h-[55px] border-b-2 border-dashed border-slate-700 flex items-end justify-center pb-1">
+              <img id="img-auditor-sign" class="max-h-[50px] hidden object-contain" alt="Auditor Signature">
+            </div>
+            <p class="font-bold text-slate-800 mt-2">Auditor Signature</p>
+            <p class="text-[10px] text-slate-500">Sign & Stamp within perimeter</p>
+          </div>
+
+          <!-- Store Manager Signature Box -->
+          <div class="flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:p-0 print:border-none">
+            <div class="w-full flex justify-between items-center mb-1 no-print">
+              <span class="font-bold text-slate-700 text-xs">Store Manager Signature</span>
+              <button type="button" onclick="clearSignature('manager')" class="text-[10px] text-rose-600 hover:underline">Clear</button>
+            </div>
+            <div class="w-full border-2 border-dashed border-slate-300 rounded-lg bg-white overflow-hidden relative touch-none no-print">
+              <canvas id="canvas-manager" width="280" height="90" class="w-full h-[90px] cursor-crosshair"></canvas>
+            </div>
+            <div class="w-full h-[55px] border-b-2 border-dashed border-slate-700 flex items-end justify-center pb-1">
+              <img id="img-manager-sign" class="max-h-[50px] hidden object-contain" alt="Store Manager Signature">
+            </div>
+            <p class="font-bold text-slate-800 mt-2">Store Manager Signature</p>
+            <p class="text-[10px] text-slate-500">Acknowledged inspection findings</p>
+          </div>
+
+          <!-- Store Stamp / Seal -->
+          <div class="flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:p-0 print:border-none">
+            <div class="w-full flex justify-between items-center mb-1 no-print">
+              <span class="font-bold text-slate-700 text-xs">Store Stamp & Date</span>
+            </div>
+            <div class="w-full h-[90px] border-2 border-dashed border-slate-300 rounded-lg bg-white flex items-center justify-center text-slate-400 text-xs font-medium no-print">
+              Affix Physical Rubber Stamp Here
+            </div>
+            <div class="w-full h-[55px] border-b-2 border-dashed border-slate-700 flex items-center justify-center">
+              <span class="text-slate-400 text-[10px] print:text-slate-600">[ Official Seal / Stamp ]</span>
+            </div>
+            <p class="font-bold text-slate-800 mt-2">Store Stamp / Seal</p>
+            <p class="text-[10px] text-slate-500">Official unit verification</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Bottom Print Footer Notice -->
+      <div class="mt-6 text-[9px] text-slate-400 text-center print:text-slate-600">
+        Confidential Quality Audit Report &bull; Form ASPL/IM5P34/F-08 &bull; Page 1 of 2
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast Notification Box -->
+  <div id="toast-box" class="no-print fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs">
+      <span id="toast-icon">ℹ️</span>
+      <span id="toast-message" class="font-medium">Action completed</span>
+    </div>
+  </div>
+
+  <script>
+    // Full Standard Checklist Dataset containing all 60 parameters exactly as per official documentation
+    const AUDIT_SECTIONS = [
+      {
+        id: 1,
+        title: "1. Cleanliness of Outlet",
+        items: [
+          { id: 1, text: "Are floors, walls, ceiling, counters, and tables cleaned?" },
+          { id: 2, text: "Is raw food/vegetables cleaned before preparation?" },
+          { id: 3, text: "Is the surface wiped with clean cloth?" },
+          { id: 4, text: "Is the wiping cloth washed, disinfected, and dried in sunlight?" },
+          { id: 5, text: "Are utensils cleaned and washed with lukewarm water and detergent?" },
+          { id: 6, text: "Are small equipment and utensils air dried?" },
+          { id: 7, text: "Is external store/kiosk design in proper manner?" },
+          { id: 8, text: "Is staff hand wash facility available as per standard?" },
+          { id: 9, text: "Are separate cutting boards (Red & Green) used for Non-veg & Veg?" },
+          { id: 10, text: "Are separate tongs used for different types of food?" },
+          { id: 11, text: "Is the food menu displayed on notice board?" },
+          { id: 12, text: "Is dishwash sink area maintained clean and hygienic?" }
+        ]
+      },
+      {
+        id: 2,
+        title: "2. Storage of Raw Food (Dry Storage, Refrigerator & Freezer)",
+        items: [
+          { id: 13, text: "All food and paper supplies are 6-8 inches off the floor?" },
+          { id: 14, text: "All food items are labelled with MRD?" },
+          { id: 15, text: "Thermometer is accurate and clearly visible?" },
+          { id: 16, text: "Storage unit is clean and neatly arranged?" },
+          { id: 17, text: "No expired food items found?" },
+          { id: 18, text: "FIFO (First-In, First-Out) inventory method is practiced?" },
+          { id: 19, text: "Is raw food kept in airtight containers?" },
+          { id: 20, text: "Are containers racked properly on storage racks?" },
+          { id: 21, text: "Does veg & non-veg storage have distinct stickers/colour codes?" },
+          { id: 22, text: "Chemicals stored completely away from food & consumables?" },
+          { id: 23, text: "Are vegetables stored at proper recommended temperature?" },
+          { id: 24, text: "Is stored food always kept covered?" }
+        ]
+      },
+      {
+        id: 3,
+        title: "3. Storage of Cooked Food",
+        items: [
+          { id: 25, text: "No bare-hand contact observed with ready-to-eat food?" },
+          { id: 26, text: "Is food steaming hot and properly cooked before serving?" },
+          { id: 27, text: "Is veg & non-veg segregation done with separate counters?" },
+          { id: 28, text: "Bain-marie water tank cleaned regularly? All pans cleaned?" },
+          { id: 29, text: "Bain-marie temperature maintained at approx. 65–70°C?" },
+          { id: 30, text: "Counter food display unit and glass regularly cleaned?" }
+        ]
+      },
+      {
+        id: 4,
+        title: "4. Waste Management Method",
+        pageBreakBefore: true,
+        items: [
+          { id: 31, text: "Is segregation of outlet waste into dry/wet done?" },
+          { id: 32, text: "Are two separate bins available for waste collection?" },
+          { id: 33, text: "Do bins have pedal/tight lids, kept closed, and maintained clean?" },
+          { id: 34, text: "Are empty cartons, used oil tins, and scrap cleared out?" },
+          { id: 35, text: "Record of used cooking oil disposal/vendor logs maintained?" },
+          { id: 36, text: "Disposal method defined (Recycle / Animal feed / Compost / Burial)?" }
+        ]
+      },
+      {
+        id: 5,
+        title: "5. Water & RO System",
+        items: [
+          { id: 37, text: "Is drinking water from RO/filter? Is unit working properly?" },
+          { id: 38, text: "Is drinking water container kept covered? Storage tank clean?" },
+          { id: 39, text: "Chlorine liquid/tablets used to disinfect if RO is inactive?" },
+          { id: 40, text: "Surroundings of water sources and dispensers kept clean?" },
+          { id: 41, text: "Are drinking dispensers and pot wash areas separated?" }
+        ]
+      },
+      {
+        id: 6,
+        title: "6. Kitchen Safety & Equipment",
+        items: [
+          { id: 42, text: "Is gas leakage detector active and operational?" },
+          { id: 43, text: "Does fire suppression system operate properly inside kitchen?" },
+          { id: 44, text: "All electrical switches, sockets, and ovens in safe condition?" },
+          { id: 45, text: "Does the commercial deep fryer have auto cut-off system?" },
+          { id: 46, text: "Is insect fly catcher functional and placed away from food path?" },
+          { id: 47, text: "Is kitchen exhaust hood maintained clean (grease-free) & working?" },
+          { id: 48, text: "Is first-aid kit available, stocked, and unexpired?" },
+          { id: 49, text: "ABC fire extinguisher & blanket available? Staff trained?" },
+          { id: 50, text: "Trade/FSSAI/Statutory license framed and prominently displayed?" }
+        ]
+      },
+      {
+        id: 7,
+        title: "7. Personal Hygiene – Food Handlers",
+        items: [
+          { id: 51, text: "Handlers wash hands with disinfectant soap after breaks/toilets?" },
+          { id: 52, text: "Fingernails trimmed short, clean, and free of polish?" },
+          { id: 53, text: "Disposable gloves worn during service; replaced as needed?" },
+          { id: 54, text: "Hairnets/caps worn properly enclosing all hair?" },
+          { id: 55, text: "Staff uniform clean and tidy? Name badge displayed?" },
+          { id: 56, text: "Clean aprons worn before beginning food preparation?" },
+          { id: 57, text: "Medical fitness certificates available for all food handlers?" }
+        ]
+      },
+      {
+        id: 8,
+        title: "8. Pest Control & Maintenance",
+        items: [
+          { id: 58, text: "Pest control executed on schedule? (Record Last Date: _________)" },
+          { id: 59, text: "Zero evidence of pests found? No gaps/entry holes observed?" },
+          { id: 60, text: "Grease trap cleaned on schedule? (Record Last Date: _________)" }
+        ]
+      }
+    ];
+
+    // State management
+    const auditState = {
+      items: {}, // key: id, val: { status: 'P' | 'F' | null, obs: string }
+      filter: 'all',
+      search: ''
+    };
+
+    function initAuditState() {
+      AUDIT_SECTIONS.forEach(section => {
+        section.items.forEach(item => {
+          auditState.items[item.id] = { status: null, obs: '' };
+        });
+      });
+
+      // Default Date to today
+      const today = new Date().toISOString().split('T')[0];
+      const nowTime = new Date().toTimeString().slice(0, 5);
+      document.getElementById('meta-date').value = today;
+      document.getElementById('meta-time').value = nowTime;
+    }
+
+    function renderChecklistTable() {
+      const tbody = document.getElementById('checklist-tbody');
+      tbody.innerHTML = '';
+
+      AUDIT_SECTIONS.forEach(section => {
+        // Section Header Row
+        const headerTr = document.createElement('tr');
+        headerTr.className = `section-row bg-slate-100 print:bg-slate-200 border-t-2 border-slate-300 ${section.pageBreakBefore ? 'print:break-before-page' : ''}`;
+        headerTr.innerHTML = `
+          <td colspan="4" class="py-2 px-3 font-bold text-slate-800 uppercase tracking-wide text-xs">
+            ${section.title}
+          </td>
+        `;
+        tbody.appendChild(headerTr);
+
+        // Section Items
+        section.items.forEach(item => {
+          const state = auditState.items[item.id];
+          const tr = document.createElement('tr');
+          tr.id = `item-row-${item.id}`;
+          tr.className = 'item-row hover:bg-slate-50 transition border-b border-slate-200';
+
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 text-center font-bold text-slate-600 border-r border-slate-200">${item.id}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-800 leading-snug border-r border-slate-200">
+              <span class="param-text">${item.text}</span>
+            </td>
+            <td class="py-1 px-2 border-r border-slate-200">
+              <input type="text" 
+                     id="obs-${item.id}"
+                     value="${state.obs || ''}"
+                     onchange="updateObservation(${item.id}, this.value)"
+                     placeholder="Observation / action notes..." 
+                     class="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none print:border-none print:bg-transparent print:p-0">
+            </td>
+            <td class="py-1 px-2 text-center align-middle">
+              <!-- Screen Interactive Buttons -->
+              <div class="flex items-center justify-center gap-1.5 no-print">
+                <button type="button" 
+                        onclick="setItemStatus(${item.id}, 'P')" 
+                        id="btn-p-${item.id}" 
+                        title="Pass"
+                        class="status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition ${state.status === 'P' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-emerald-50 hover:text-emerald-700'}">
+                  P
+                </button>
+                <button type="button" 
+                        onclick="setItemStatus(${item.id}, 'F')" 
+                        id="btn-f-${item.id}" 
+                        title="Fail"
+                        class="status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition ${state.status === 'F' ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-rose-50 hover:text-rose-700'}">
+                  F
+                </button>
+              </div>
+
+              <!-- Print Checkboxes matching standard form -->
+              <div class="print-only text-center font-bold text-[10px]">
+                <span style="display: inline-block; margin-right: 6px;">
+                  <span style="display:inline-block; width:10px; height:10px; border:1px solid #333; vertical-align:middle; line-height:9px; text-align:center;">
+                    ${state.status === 'P' ? '✓' : ''}
+                  </span> P
+                </span>
+                <span style="display: inline-block;">
+                  <span style="display:inline-block; width:10px; height:10px; border:1px solid #333; vertical-align:middle; line-height:9px; text-align:center;">
+                    ${state.status === 'F' ? '✗' : ''}
+                  </span> F
+                </span>
+              </div>
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+      });
+
+      calculateScores();
+    }
+
+    function setItemStatus(id, status) {
+      if (auditState.items[id].status === status) {
+        // Toggle off if clicked again
+        auditState.items[id].status = null;
+      } else {
+        auditState.items[id].status = status;
+      }
+      refreshItemUI(id);
+      calculateScores();
+    }
+
+    function updateObservation(id, text) {
+      auditState.items[id].obs = text;
+    }
+
+    function refreshItemUI(id) {
+      const state = auditState.items[id];
+      const btnP = document.getElementById(`btn-p-${id}`);
+      const btnF = document.getElementById(`btn-f-${id}`);
+      const row = document.getElementById(`item-row-${id}`);
+
+      if (!btnP || !btnF) return;
+
+      if (state.status === 'P') {
+        btnP.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-emerald-600 text-white border-emerald-600 shadow-sm';
+        btnF.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-rose-50 hover:text-rose-700';
+        row.classList.remove('bg-rose-50/60');
+      } else if (state.status === 'F') {
+        btnP.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-emerald-50 hover:text-emerald-700';
+        btnF.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-rose-600 text-white border-rose-600 shadow-sm';
+        row.classList.add('bg-rose-50/60');
+      } else {
+        btnP.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-emerald-50 hover:text-emerald-700';
+        btnF.className = 'status-btn px-2.5 py-1 rounded text-[11px] font-bold border transition bg-white text-slate-700 border-slate-300 hover:bg-rose-50 hover:text-rose-700';
+        row.classList.remove('bg-rose-50/60');
+      }
+    }
+
+    function calculateScores() {
+      let passed = 0;
+      let failed = 0;
+      let pending = 0;
+      const total = 60;
+
+      for (let i = 1; i <= total; i++) {
+        const st = auditState.items[i]?.status;
+        if (st === 'P') passed++;
+        else if (st === 'F') failed++;
+        else pending++;
+      }
+
+      // Percentage calculation: Passed / total evaluated OR standard total 60
+      const totalEvaluated = passed + failed;
+      const pct = totalEvaluated > 0 ? ((passed / 60) * 100).toFixed(1) : 0;
+
+      // Update Nav Counters
+      document.getElementById('stat-passed').innerText = passed;
+      document.getElementById('stat-failed').innerText = failed;
+      document.getElementById('stat-pending').innerText = pending;
+      document.getElementById('stat-score').innerText = `${pct}%`;
+
+      // Update Summary Table Counters
+      document.getElementById('summary-passed').innerText = passed;
+      document.getElementById('summary-failed').innerText = failed;
+      document.getElementById('summary-pending').innerText = pending;
+      document.getElementById('summary-pct').innerText = `${pct}%`;
+
+      // Progress Bar
+      const evaluatedPct = ((totalEvaluated / 60) * 100).toFixed(0);
+      document.getElementById('progress-bar').style.width = `${evaluatedPct}%`;
+
+      // Verdict determination
+      const topBadge = document.getElementById('stat-verdict-badge');
+      const summaryVerdict = document.getElementById('summary-verdict-tag');
+
+      if (pending > 0) {
+        topBadge.className = 'ml-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        topBadge.innerText = `${pending} Pending`;
+        summaryVerdict.className = 'mt-1 font-black text-sm uppercase px-4 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
+        summaryVerdict.innerText = `[ ] IN PROGRESS (${pct}%)`;
+      } else {
+        if (parseFloat(pct) >= 80.0) {
+          topBadge.className = 'ml-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500 text-white shadow';
+          topBadge.innerText = 'PASS (>= 80%)';
+          summaryVerdict.className = 'mt-1 font-black text-sm uppercase px-4 py-0.5 rounded-full bg-emerald-600 text-white';
+          summaryVerdict.innerText = '✓ AUDIT PASSED';
+        } else {
+          topBadge.className = 'ml-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-600 text-white shadow';
+          topBadge.innerText = 'FAIL (< 80%)';
+          summaryVerdict.className = 'mt-1 font-black text-sm uppercase px-4 py-0.5 rounded-full bg-rose-600 text-white';
+          summaryVerdict.innerText = '✗ AUDIT FAILED (ACTION REQ.)';
+        }
+      }
+    }
+
+    function quickFillPass() {
+      for (let i = 1; i <= 60; i++) {
+        if (!auditState.items[i].status) {
+          auditState.items[i].status = 'P';
+          refreshItemUI(i);
+        }
+      }
+      calculateScores();
+      showToast('All pending items marked as PASSED', '✅');
+    }
+
+    function fillDemoData() {
+      document.getElementById('meta-outlet').value = 'Cyberhub Gourmet Kitchen #03';
+      document.getElementById('meta-location').value = 'Ground Floor, Building 10, Sector 24';
+      document.getElementById('meta-auditor').value = 'Rajesh Verma (Lead QHS Inspector)';
+      document.getElementById('meta-rep').value = 'Chef Santosh Kumar (Kitchen Manager)';
+
+      // Mark items with realistic audit distribution
+      for (let i = 1; i <= 60; i++) {
+        auditState.items[i].status = 'P';
+        auditState.items[i].obs = '';
+      }
+
+      // Insert realistic non-conformances
+      auditState.items[14].status = 'F';
+      auditState.items[14].obs = '2 dressing squeeze bottles missing date-opened sticker';
+
+      auditState.items[29].status = 'F';
+      auditState.items[29].obs = 'Soup bain-marie operating at 58°C, thermostat dialed up to 70°C immediately';
+
+      auditState.items[47].status = 'F';
+      auditState.items[47].obs = 'Exhaust baffle filters due for deep degreasing cycle';
+
+      auditState.items[58].status = 'P';
+      auditState.items[58].obs = 'Pest control done 28-Aug-2026, certificate valid';
+
+      auditState.items[60].status = 'P';
+      auditState.items[60].obs = 'Cleaned on 01-Sep-2026';
+
+      for (let i = 1; i <= 60; i++) {
+        refreshItemUI(i);
+        const obsInput = document.getElementById(`obs-${i}`);
+        if (obsInput) obsInput.value = auditState.items[i].obs;
+      }
+
+      calculateScores();
+      showToast('Sample audit inspection loaded with live scoring', '📋');
+    }
+
+    function resetChecklist() {
+      for (let i = 1; i <= 60; i++) {
+        auditState.items[i].status = null;
+        auditState.items[i].obs = '';
+        refreshItemUI(i);
+        const obsInput = document.getElementById(`obs-${i}`);
+        if (obsInput) obsInput.value = '';
+      }
+      clearSignature('auditor');
+      clearSignature('manager');
+      calculateScores();
+      showToast('Audit parameters and status cleared', '🔄');
+    }
+
+    function filterItems(type) {
+      auditState.filter = type;
+      
+      // Update filter tabs
+      const tabs = ['all', 'pending', 'pass', 'fail'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`filter-${t}`);
+        if (t === type) {
+          btn.className = 'filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-slate-900 text-white transition';
+        } else {
+          btn.className = 'filter-btn text-xs font-semibold px-3 py-1 rounded-full bg-white text-slate-700 hover:bg-slate-200 border border-slate-300 transition';
+        }
+      });
+
+      applyFiltersAndSearch();
+    }
+
+    function searchAuditItems() {
+      auditState.search = document.getElementById('search-input').value.toLowerCase().trim();
+      applyFiltersAndSearch();
+    }
+
+    function applyFiltersAndSearch() {
+      for (let i = 1; i <= 60; i++) {
+        const row = document.getElementById(`item-row-${i}`);
+        if (!row) continue;
+
+        const state = auditState.items[i];
+        const text = row.querySelector('.param-text')?.innerText.toLowerCase() || '';
+
+        // Status matching
+        let matchesStatus = true;
+        if (auditState.filter === 'pass') matchesStatus = (state.status === 'P');
+        else if (auditState.filter === 'fail') matchesStatus = (state.status === 'F');
+        else if (auditState.filter === 'pending') matchesStatus = (state.status === null);
+
+        // Search matching
+        const matchesSearch = text.includes(auditState.search) || state.obs.toLowerCase().includes(auditState.search);
+
+        if (matchesStatus && matchesSearch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    }
+
+    function setupSignatureCanvas(canvasId, imgId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      let isDrawing = false;
+
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#0f172a';
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function startDraw(e) {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault();
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        e.preventDefault();
+      }
+
+      function stopDraw() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        // Sync to print image
+        const img = document.getElementById(imgId);
+        img.src = canvas.toDataURL();
+        img.classList.remove('hidden');
+      }
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', stopDraw);
+
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      canvas.addEventListener('touchend', stopDraw);
+    }
+
+    function clearSignature(type) {
+      const canvas = document.getElementById(`canvas-${type}`);
+      const img = document.getElementById(`img-${type}-sign`);
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      if (img) {
+        img.src = '';
+        img.classList.add('hidden');
+      }
+      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} signature reset`, '✏️');
+    }
+
+    function triggerPrint() {
+      // Ensure all rows are visible during print regardless of active filter
+      const rows = document.querySelectorAll('.item-row');
+      rows.forEach(r => r.style.display = '');
+
+      // Render updated signature images into placeholders
+      const auditorCanvas = document.getElementById('canvas-auditor');
+      const managerCanvas = document.getElementById('canvas-manager');
+      const imgAuditor = document.getElementById('img-auditor-sign');
+      const imgManager = document.getElementById('img-manager-sign');
+
+      if (auditorCanvas && imgAuditor) {
+        imgAuditor.src = auditorCanvas.toDataURL();
+        imgAuditor.classList.remove('hidden');
+      }
+      if (managerCanvas && imgManager) {
+        imgManager.src = managerCanvas.toDataURL();
+        imgManager.classList.remove('hidden');
+      }
+
+      // Re-render table checkboxes for print mode
+      renderChecklistTable();
+
+      showToast('Opening print dialog. Select "Save as PDF" for document export', '🖨️');
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    }
+
+    function showToast(msg, icon = 'ℹ️') {
+      const toast = document.getElementById('toast-box');
+      document.getElementById('toast-message').innerText = msg;
+      document.getElementById('toast-icon').innerText = icon;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // Initialize application on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      initAuditState();
+      renderChecklistTable();
+      setupSignatureCanvas('canvas-auditor', 'img-auditor-sign');
+      setupSignatureCanvas('canvas-manager', 'img-manager-sign');
+    });
+  </script>
+</body>
+</html>

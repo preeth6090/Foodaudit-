@@ -1,0 +1,115 @@
+// Full Standard Checklist Dataset containing all 60 parameters exactly as per official documentation
+export const AUDIT_SECTIONS = [
+  {
+    id: 1,
+    title: '1. Cleanliness of Outlet',
+    items: [
+      { id: 1, text: 'Are floors, walls, ceiling, counters, and tables cleaned?' },
+      { id: 2, text: 'Is raw food/vegetables cleaned before preparation?' },
+      { id: 3, text: 'Is the surface wiped with clean cloth?' },
+      { id: 4, text: 'Is the wiping cloth washed, disinfected, and dried in sunlight?' },
+      { id: 5, text: 'Are utensils cleaned and washed with lukewarm water and detergent?' },
+      { id: 6, text: 'Are small equipment and utensils air dried?' },
+      { id: 7, text: 'Is external store/kiosk design in proper manner?' },
+      { id: 8, text: 'Is staff hand wash facility available as per standard?' },
+      { id: 9, text: 'Are separate cutting boards (Red & Green) used for Non-veg & Veg?' },
+      { id: 10, text: 'Are separate tongs used for different types of food?' },
+      { id: 11, text: 'Is the food menu displayed on notice board?' },
+      { id: 12, text: 'Is dishwash sink area maintained clean and hygienic?' },
+    ],
+  },
+  {
+    id: 2,
+    title: '2. Storage of Raw Food (Dry Storage, Refrigerator & Freezer)',
+    items: [
+      { id: 13, text: 'All food and paper supplies are 6-8 inches off the floor?' },
+      { id: 14, text: 'All food items are labelled with MRD?' },
+      { id: 15, text: 'Thermometer is accurate and clearly visible?' },
+      { id: 16, text: 'Storage unit is clean and neatly arranged?' },
+      { id: 17, text: 'No expired food items found?' },
+      { id: 18, text: 'FIFO (First-In, First-Out) inventory method is practiced?' },
+      { id: 19, text: 'Is raw food kept in airtight containers?' },
+      { id: 20, text: 'Are containers racked properly on storage racks?' },
+      { id: 21, text: 'Does veg & non-veg storage have distinct stickers/colour codes?' },
+      { id: 22, text: 'Chemicals stored completely away from food & consumables?' },
+      { id: 23, text: 'Are vegetables stored at proper recommended temperature?' },
+      { id: 24, text: 'Is stored food always kept covered?' },
+    ],
+  },
+  {
+    id: 3,
+    title: '3. Storage of Cooked Food',
+    items: [
+      { id: 25, text: 'No bare-hand contact observed with ready-to-eat food?' },
+      { id: 26, text: 'Is food steaming hot and properly cooked before serving?' },
+      { id: 27, text: 'Is veg & non-veg segregation done with separate counters?' },
+      { id: 28, text: 'Bain-marie water tank cleaned regularly? All pans cleaned?' },
+      { id: 29, text: 'Bain-marie temperature maintained at approx. 65–70°C?' },
+      { id: 30, text: 'Counter food display unit and glass regularly cleaned?' },
+    ],
+  },
+  {
+    id: 4,
+    title: '4. Waste Management Method',
+    pageBreakBefore: true,
+    items: [
+      { id: 31, text: 'Is segregation of outlet waste into dry/wet done?' },
+      { id: 32, text: 'Are two separate bins available for waste collection?' },
+      { id: 33, text: 'Do bins have pedal/tight lids, kept closed, and maintained clean?' },
+      { id: 34, text: 'Are empty cartons, used oil tins, and scrap cleared out?' },
+      { id: 35, text: 'Record of used cooking oil disposal/vendor logs maintained?' },
+      { id: 36, text: 'Disposal method defined (Recycle / Animal feed / Compost / Burial)?' },
+    ],
+  },
+  {
+    id: 5,
+    title: '5. Water & RO System',
+    items: [
+      { id: 37, text: 'Is drinking water from RO/filter? Is unit working properly?' },
+      { id: 38, text: 'Is drinking water container kept covered? Storage tank clean?' },
+      { id: 39, text: 'Chlorine liquid/tablets used to disinfect if RO is inactive?' },
+      { id: 40, text: 'Surroundings of water sources and dispensers kept clean?' },
+      { id: 41, text: 'Are drinking dispensers and pot wash areas separated?' },
+    ],
+  },
+  {
+    id: 6,
+    title: '6. Kitchen Safety & Equipment',
+    items: [
+      { id: 42, text: 'Is gas leakage detector active and operational?' },
+      { id: 43, text: 'Does fire suppression system operate properly inside kitchen?' },
+      { id: 44, text: 'All electrical switches, sockets, and ovens in safe condition?' },
+      { id: 45, text: 'Does the commercial deep fryer have auto cut-off system?' },
+      { id: 46, text: 'Is insect fly catcher functional and placed away from food path?' },
+      { id: 47, text: 'Is kitchen exhaust hood maintained clean (grease-free) & working?' },
+      { id: 48, text: 'Is first-aid kit available, stocked, and unexpired?' },
+      { id: 49, text: 'ABC fire extinguisher & blanket available? Staff trained?' },
+      { id: 50, text: 'Trade/FSSAI/Statutory license framed and prominently displayed?' },
+    ],
+  },
+  {
+    id: 7,
+    title: '7. Personal Hygiene – Food Handlers',
+    items: [
+      { id: 51, text: 'Handlers wash hands with disinfectant soap after breaks/toilets?' },
+      { id: 52, text: 'Fingernails trimmed short, clean, and free of polish?' },
+      { id: 53, text: 'Disposable gloves worn during service; replaced as needed?' },
+      { id: 54, text: 'Hairnets/caps worn properly enclosing all hair?' },
+      { id: 55, text: 'Staff uniform clean and tidy? Name badge displayed?' },
+      { id: 56, text: 'Clean aprons worn before beginning food preparation?' },
+      { id: 57, text: 'Medical fitness certificates available for all food handlers?' },
+    ],
+  },
+  {
+    id: 8,
+    title: '8. Pest Control & Maintenance',
+    items: [
+      { id: 58, text: 'Pest control executed on schedule? (Record Last Date: _________)' },
+      { id: 59, text: 'Zero evidence of pests found? No gaps/entry holes observed?' },
+      { id: 60, text: 'Grease trap cleaned on schedule? (Record Last Date: _________)' },
+    ],
+  },
+]
+
+export const TOTAL_ITEMS = AUDIT_SECTIONS.reduce((sum, section) => sum + section.items.length, 0)
+export const PASS_BENCHMARK = 80
