@@ -6,11 +6,22 @@ import ChecklistTable from './components/ChecklistTable.jsx'
 import ScoringSummary from './components/ScoringSummary.jsx'
 import SignaturePad from './components/SignaturePad.jsx'
 import Toast from './components/Toast.jsx'
+import SettingsPanel from './components/SettingsPanel.jsx'
+import SavedDocumentsPanel from './components/SavedDocumentsPanel.jsx'
 import { useAuditState } from './hooks/useAuditState.js'
+import { useSettings } from './hooks/useSettings.js'
+import { useSavedDocuments } from './hooks/useSavedDocuments.js'
+import { buildReportHtml, openReportWindow } from './utils/report.js'
 
 export default function App() {
-  const { state, dispatch, scores } = useAuditState()
+  const { settings, updateSettings, nextDocNo, consumeDocNo } = useSettings()
+  const { state, dispatch, scores } = useAuditState(settings.passingBenchmark)
+  const { documents, saveDocument, deleteDocument } = useSavedDocuments()
+
   const [toast, setToast] = useState(null)
+  const [editMode, setEditMode] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [savedDocsOpen, setSavedDocsOpen] = useState(false)
   const toastTimerRef = useRef(null)
 
   const showToast = useCallback((message, icon) => {
@@ -19,19 +30,17 @@ export default function App() {
     toastTimerRef.current = setTimeout(() => setToast(null), 3000)
   }, [])
 
+  const displayDocNo = state.docNo ?? nextDocNo
+  const isDraftDoc = !state.docNo
+
   function handlePassAll() {
     dispatch({ type: 'QUICK_FILL_PASS' })
     showToast('All pending items marked as PASSED', '✅')
   }
 
-  function handleDemoFill() {
-    dispatch({ type: 'FILL_DEMO_DATA' })
-    showToast('Sample audit inspection loaded with live scoring', '📋')
-  }
-
   function handleReset() {
     dispatch({ type: 'RESET' })
-    showToast('Audit parameters and status cleared', '🔄')
+    showToast('Started a new audit', '🔄')
   }
 
   function handlePrint() {
@@ -39,9 +48,82 @@ export default function App() {
     setTimeout(() => window.print(), 350)
   }
 
+  function handleSaveDocument() {
+    const docNo = consumeDocNo()
+    dispatch({ type: 'SET_DOC_NO', docNo })
+    saveDocument({
+      docNo,
+      savedAt: new Date().toISOString(),
+      meta: state.meta,
+      checklist: state.checklist,
+      items: state.items,
+      signatures: state.signatures,
+      scores,
+    })
+    showToast(`Saved as ${docNo}`, '💾')
+  }
+
+  function handleLoadDocument(doc) {
+    dispatch({
+      type: 'LOAD_SNAPSHOT',
+      docNo: doc.docNo,
+      meta: doc.meta,
+      checklist: doc.checklist,
+      items: doc.items,
+      signatures: doc.signatures,
+    })
+    setSavedDocsOpen(false)
+    showToast(`Loaded ${doc.docNo}`, '📂')
+  }
+
+  function handleDeleteDocument(docNo) {
+    deleteDocument(docNo)
+    showToast('Document deleted', '🗑️')
+  }
+
+  function handleGenerateReport(doc) {
+    const html = buildReportHtml(
+      doc
+        ? {
+            docNo: doc.docNo,
+            orgTitle: settings.orgTitle,
+            meta: doc.meta,
+            checklist: doc.checklist,
+            items: doc.items,
+            scores: doc.scores,
+            passingBenchmark: settings.passingBenchmark,
+          }
+        : {
+            docNo: state.docNo,
+            orgTitle: settings.orgTitle,
+            meta: state.meta,
+            checklist: state.checklist,
+            items: state.items,
+            scores,
+            passingBenchmark: settings.passingBenchmark,
+          }
+    )
+    const opened = openReportWindow(html)
+    if (!opened) showToast('Please allow pop-ups to generate the report', '⚠️')
+  }
+
   return (
     <>
-      <Header scores={scores} onPassAll={handlePassAll} onDemoFill={handleDemoFill} onPrint={handlePrint} onReset={handleReset} />
+      <Header
+        title={settings.orgTitle}
+        docNo={displayDocNo}
+        isDraftDoc={isDraftDoc}
+        passingBenchmark={settings.passingBenchmark}
+        scores={scores}
+        savedCount={documents.length}
+        onPassAll={handlePassAll}
+        onSave={handleSaveDocument}
+        onGenerateReport={() => handleGenerateReport(null)}
+        onPrint={handlePrint}
+        onReset={handleReset}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenSavedDocs={() => setSavedDocsOpen(true)}
+      />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 print-container">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden p-6 sm:p-8 print:p-0 print:border-none print:shadow-none">
@@ -55,10 +137,10 @@ export default function App() {
               </div>
               <div className="text-left sm:text-right text-xs text-slate-600 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-200 print:border-none print:p-0">
                 <div>
-                  Doc No: <strong className="text-slate-900">ASPL/IM5P34/F-08</strong> | Ver: <strong className="text-slate-900">00</strong>
+                  Doc No: <strong className="text-slate-900">{displayDocNo}</strong>
                 </div>
                 <div>
-                  Rev Date: <strong className="text-slate-900">30-APR-2026</strong>
+                  Passing Benchmark: <strong className="text-slate-900">{settings.passingBenchmark}%</strong>
                 </div>
               </div>
             </div>
@@ -73,16 +155,24 @@ export default function App() {
             filter={state.filter}
             search={state.search}
             total={scores.total}
+            editMode={editMode}
             onFilterChange={(filter) => dispatch({ type: 'SET_FILTER', filter })}
             onSearchChange={(search) => dispatch({ type: 'SET_SEARCH', search: search.toLowerCase().trim() })}
+            onToggleEditMode={() => setEditMode((v) => !v)}
           />
 
           <ChecklistTable
+            checklist={state.checklist}
             items={state.items}
             filter={state.filter}
             search={state.search}
+            editMode={editMode}
             onToggleStatus={(id, status) => dispatch({ type: 'TOGGLE_STATUS', id, status })}
             onObsChange={(id, value) => dispatch({ type: 'SET_OBS', id, value })}
+            onSetProof={(id, dataUrl) => dispatch({ type: 'SET_PROOF', id, dataUrl })}
+            onClearProof={(id) => dispatch({ type: 'SET_PROOF', id, dataUrl: null })}
+            onAddItem={(sectionId, text) => dispatch({ type: 'ADD_ITEM', sectionId, text })}
+            onRemoveItem={(sectionId, itemId) => dispatch({ type: 'REMOVE_ITEM', sectionId, itemId })}
           />
 
           <ScoringSummary scores={scores} />
@@ -121,18 +211,33 @@ export default function App() {
                   <span className="text-slate-400 text-[10px] print:text-slate-600">[ Official Seal / Stamp ]</span>
                 </div>
                 <p className="font-bold text-slate-800 mt-2">Store Stamp / Seal</p>
-                <p className="text-[10px] text-slate-500">Official unit verification</p>
+                <p className="text-[10px] text-slate-500">Seal may be affixed physically after printing</p>
               </div>
             </div>
           </section>
 
-          <div className="mt-6 text-[9px] text-slate-400 text-center print:text-slate-600">
-            Confidential Quality Audit Report &bull; Form ASPL/IM5P34/F-08 &bull; Page 1 of 2
-          </div>
+          <div className="mt-6 text-[9px] text-slate-400 text-center print:text-slate-600">Confidential Audit Report</div>
         </div>
       </main>
 
       <Toast toast={toast} />
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onUpdate={updateSettings}
+        nextDocNo={nextDocNo}
+      />
+
+      <SavedDocumentsPanel
+        open={savedDocsOpen}
+        onClose={() => setSavedDocsOpen(false)}
+        documents={documents}
+        onLoad={handleLoadDocument}
+        onDelete={handleDeleteDocument}
+        onReport={handleGenerateReport}
+      />
     </>
   )
 }

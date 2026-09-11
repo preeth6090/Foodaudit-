@@ -12,7 +12,7 @@ const INACTIVE_CLASS = {
   fail: 'bg-white text-rose-700 hover:bg-rose-50 border border-slate-300',
 }
 
-export default function FilterBar({ filter, search, total, onFilterChange, onSearchChange }) {
+export default function FilterBar({ filter, search, total, editMode, onFilterChange, onSearchChange, onToggleEditMode }) {
   return (
     <div className="no-print mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
       <div className="flex items-center gap-2 flex-wrap">
@@ -30,17 +30,29 @@ export default function FilterBar({ filter, search, total, onFilterChange, onSea
           </button>
         ))}
       </div>
-      <div className="relative w-full sm:w-64">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search parameters..."
-          className="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-        />
-        <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="relative w-full sm:w-64">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search parameters..."
+            className="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+          />
+          <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleEditMode}
+          title="Add or remove checklist questions"
+          className={`shrink-0 text-xs font-semibold px-3 py-2 rounded-lg border transition ${
+            editMode ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-200'
+          }`}
+        >
+          {editMode ? 'Done Editing' : 'Edit Questions'}
+        </button>
       </div>
     </div>
   )

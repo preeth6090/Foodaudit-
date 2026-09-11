@@ -1,4 +1,7 @@
-// Full Standard Checklist Dataset containing all 60 parameters exactly as per official documentation
+// Default/standard checklist dataset containing the 60 baseline parameters as per
+// official documentation. This seeds the editable checklist template — sections and
+// items can be added to or removed from a working copy at runtime (see
+// useAuditState's checklist template persistence).
 export const AUDIT_SECTIONS = [
   {
     id: 1,
@@ -111,5 +114,6 @@ export const AUDIT_SECTIONS = [
   },
 ]
 
-export const TOTAL_ITEMS = AUDIT_SECTIONS.reduce((sum, section) => sum + section.items.length, 0)
-export const PASS_BENCHMARK = 80
+export function cloneSections(sections) {
+  return JSON.parse(JSON.stringify(sections))
+}

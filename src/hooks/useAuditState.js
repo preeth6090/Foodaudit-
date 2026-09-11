@@ -1,6 +1,7 @@
-import { useMemo, useReducer } from 'react'
-import { AUDIT_SECTIONS, TOTAL_ITEMS, PASS_BENCHMARK } from '../data/auditSections.js'
-import { DEMO_META, DEMO_OVERRIDES } from '../data/demoData.js'
+import { useEffect, useMemo, useReducer } from 'react'
+import { AUDIT_SECTIONS, cloneSections } from '../data/auditSections.js'
+
+const TEMPLATE_KEY = 'kitchenAudit.checklistTemplate'
 
 function todayISODate() {
   return new Date().toISOString().split('T')[0]
@@ -10,18 +11,36 @@ function nowTime() {
   return new Date().toTimeString().slice(0, 5)
 }
 
-function emptyItems() {
+function loadTemplate() {
+  try {
+    const raw = localStorage.getItem(TEMPLATE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // fall through to default
+  }
+  return cloneSections(AUDIT_SECTIONS)
+}
+
+function emptyItemsFor(checklist) {
   const items = {}
-  AUDIT_SECTIONS.forEach((section) => {
+  checklist.forEach((section) => {
     section.items.forEach((item) => {
-      items[item.id] = { status: null, obs: '' }
+      items[item.id] = { status: null, obs: '', proof: null }
     })
   })
   return items
 }
 
+function nextItemId(checklist) {
+  let max = 0
+  checklist.forEach((section) => section.items.forEach((item) => { if (item.id > max) max = item.id }))
+  return max + 1
+}
+
 function initialState() {
+  const checklist = loadTemplate()
   return {
+    docNo: null, // assigned when the audit is saved or a saved document is loaded
     meta: {
       outlet: '',
       date: todayISODate(),
@@ -30,7 +49,8 @@ function initialState() {
       auditor: '',
       rep: '',
     },
-    items: emptyItems(),
+    checklist,
+    items: emptyItemsFor(checklist),
     signatures: { auditor: null, manager: null },
     filter: 'all',
     search: '',
@@ -57,6 +77,12 @@ function reducer(state, action) {
         items: { ...state.items, [action.id]: { ...state.items[action.id], obs: action.value } },
       }
 
+    case 'SET_PROOF':
+      return {
+        ...state,
+        items: { ...state.items, [action.id]: { ...state.items[action.id], proof: action.dataUrl } },
+      }
+
     case 'SET_FILTER':
       return { ...state, filter: action.filter }
 
@@ -74,14 +100,43 @@ function reducer(state, action) {
       return { ...state, items }
     }
 
-    case 'FILL_DEMO_DATA': {
-      const items = {}
-      Object.keys(state.items).forEach((id) => {
-        const override = DEMO_OVERRIDES[id]
-        items[id] = override ? { status: override.status, obs: override.obs } : { status: 'P', obs: '' }
-      })
-      return { ...state, meta: { ...state.meta, ...DEMO_META }, items }
+    case 'ADD_ITEM': {
+      const id = nextItemId(state.checklist)
+      const checklist = state.checklist.map((section) =>
+        section.id === action.sectionId ? { ...section, items: [...section.items, { id, text: action.text }] } : section
+      )
+      return {
+        ...state,
+        checklist,
+        items: { ...state.items, [id]: { status: null, obs: '', proof: null } },
+      }
     }
+
+    case 'REMOVE_ITEM': {
+      const checklist = state.checklist.map((section) =>
+        section.id === action.sectionId
+          ? { ...section, items: section.items.filter((item) => item.id !== action.itemId) }
+          : section
+      )
+      const items = { ...state.items }
+      delete items[action.itemId]
+      return { ...state, checklist, items }
+    }
+
+    case 'SET_DOC_NO':
+      return { ...state, docNo: action.docNo }
+
+    case 'LOAD_SNAPSHOT':
+      return {
+        ...state,
+        docNo: action.docNo,
+        meta: action.meta,
+        checklist: action.checklist,
+        items: action.items,
+        signatures: action.signatures,
+        filter: 'all',
+        search: '',
+      }
 
     case 'RESET':
       return initialState()
@@ -91,8 +146,21 @@ function reducer(state, action) {
   }
 }
 
-export function useAuditState() {
+export function useAuditState(passingBenchmark) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TEMPLATE_KEY, JSON.stringify(state.checklist))
+    } catch {
+      // ignore persistence failures (e.g. private browsing storage limits)
+    }
+  }, [state.checklist])
+
+  const totalItems = useMemo(
+    () => state.checklist.reduce((sum, section) => sum + section.items.length, 0),
+    [state.checklist]
+  )
 
   const scores = useMemo(() => {
     let passed = 0
@@ -101,13 +169,13 @@ export function useAuditState() {
       if (status === 'P') passed++
       else if (status === 'F') failed++
     })
-    const pending = TOTAL_ITEMS - passed - failed
+    const pending = totalItems - passed - failed
     const totalEvaluated = passed + failed
-    const pct = totalEvaluated > 0 ? Number(((passed / TOTAL_ITEMS) * 100).toFixed(1)) : 0
-    const evaluatedPct = Number(((totalEvaluated / TOTAL_ITEMS) * 100).toFixed(0))
-    const verdict = pending > 0 ? 'pending' : pct >= PASS_BENCHMARK ? 'pass' : 'fail'
-    return { passed, failed, pending, pct, evaluatedPct, verdict, total: TOTAL_ITEMS }
-  }, [state.items])
+    const pct = totalEvaluated > 0 ? Number(((passed / totalItems) * 100).toFixed(1)) : 0
+    const evaluatedPct = totalItems > 0 ? Number(((totalEvaluated / totalItems) * 100).toFixed(0)) : 0
+    const verdict = pending > 0 ? 'pending' : pct >= passingBenchmark ? 'pass' : 'fail'
+    return { passed, failed, pending, pct, evaluatedPct, verdict, total: totalItems }
+  }, [state.items, totalItems, passingBenchmark])
 
   return { state, dispatch, scores }
 }
